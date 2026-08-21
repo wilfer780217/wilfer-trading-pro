@@ -1,117 +1,76 @@
 import streamlit as st
-import yfinance as yf
 import pandas as pd
-import plotly.graph_objects as go
+import os
 import urllib.parse
 
-st.set_page_config(page_title="Wilfer Trading Pro", layout="wide")
+st.set_page_config(page_title="Wilfer Trading Pro", page_icon="☯️", layout="wide")
 
-# ==========================================
-# LOGOTIPO Y TÍTULO PRINCIPAL
-# ==========================================
+# --- LOGOTIPO Y TÍTULO ---
 try:
-    st.image("logo.wilfer.jpg", width=350)
-except Exception:
-    pass
+    st.image("logo.wilfer.jpg", width=250)
+except:
+    st.markdown("<h1 style='text-align: center;'>☯️ WILFER TRADING PRO</h1>", unsafe_allow_html=True)
 
-st.title("🚀 WILFER TRADING PRO")
-st.subheader("Tu Asistente Profesional de Trading en Tiempo Real")
+# --- FUNCIONES DE SEGURIDAD (Bitácora) ---
+def cargar_bitacora(file_path):
+    columnas = ["P/L", "Activo", "Estado", "Psicologia/Notas"]
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path)
+    return pd.DataFrame(columns=columnas)
 
-# ==========================================
-# 1. GRÁFICO PROFESIONAL DE VELAS (CON PRECIOS EN LOS EJES)
-# ==========================================
-st.markdown("---")
-st.header("📊 Gráfico de Velas Japonesas")
-activo_sel = st.selectbox("Selecciona activo para el gráfico:", ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "EURUSD=X"])
+# --- DICCIONARIO Y BARRA LATERAL ---
+TRADUCCIONES = {
+    "Español": {"menu": ["Centro de Operaciones", "Calculadora", "Análisis", "Configuración"], "btn": "Registrar"},
+    "English": {"menu": ["Operations Center", "Calculator", "Analysis", "Settings"], "btn": "Register"}
+}
 
-with st.spinner("Cargando gráfico profesional y escalas de precios..."):
-    df = yf.download(activo_sel, period="1mo", interval="1d", progress=False)
-    
-    if not df.empty:
-        # Limpieza de formato MultiIndex de yfinance
-        open_col = df['Open'].iloc[:, 0] if isinstance(df['Open'], pd.DataFrame) else df['Open']
-        high_col = df['High'].iloc[:, 0] if isinstance(df['High'], pd.DataFrame) else df['High']
-        low_col = df['Low'].iloc[:, 0] if isinstance(df['Low'], pd.DataFrame) else df['Low']
-        close_col = df['Close'].iloc[:, 0] if isinstance(df['Close'], pd.DataFrame) else df['Close']
+idioma = st.sidebar.selectbox("🌐 Idioma", ["Español", "English"])
+t = TRADUCCIONES[idioma]
+tipo_cuenta = st.sidebar.radio("Cuenta:", ["Demo (Virtual)", "Real"])
+FILE_PATH = "bitacora_demo.csv" if tipo_cuenta == "Demo (Virtual)" else "bitacora_real.csv"
+df = cargar_bitacora(FILE_PATH)
 
-        fig = go.Figure(data=[go.Candlestick(
-            x=df.index,
-            open=open_col,
-            high=high_col,
-            low=low_col,
-            close=close_col,
-            name="Precio"
-        )])
-        
-        # Configuramos los ejes para que se muestren claramente los números de precio y fechas
-        fig.update_layout(
-            template="plotly_dark",
-            title=f"Evolución y Precios de {activo_sel}",
-            xaxis_title="Fecha",
-            yaxis_title="Precio (USD)",
-            xaxis_rangeslider_visible=False,
-            height=550,
-            yaxis=dict(showticklabels=True, side="right") # Los números de precio al lado derecho como los pros
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("No se pudieron cargar los datos del gráfico en este momento.")
-
-# ==========================================
-# 2. ESCÁNER DE MERCADO
-# ==========================================
-st.markdown("---")
-st.header("🔍 Radar de Mercados")
-if st.button("INICIAR ESCÁNER"):
-    with st.spinner("Analizando tendencias..."):
-        activos_radar = ["BTC-USD", "ETH-USD", "SOL-USD"]
-        for act in activos_radar:
-            df_rad = yf.download(act, period="5d", interval="15m", progress=False)
-            if not df_rad.empty:
-                precio_actual = float(df_rad['Close'].iloc[-1].item())
-                st.success(f"📈 {act} | Precio actual: {precio_actual:,.2f} USD")
-
-# ==========================================
-# 3. CALCULADORA DE GESTIÓN DE RIESGO
-# ==========================================
-st.markdown("---")
-st.header("🧮 Calculadora de Take Profit / Stop Loss")
-
-col1, col2 = st.columns(2)
-with col1:
-    precio_entrada = st.number_input("Precio de Entrada (USD):", value=50000.0)
-    tipo_operacion = st.radio("Tipo de Operación:", ["LONG (Compra)", "SHORT (Venta)"])
-with col2:
-    porcentaje_ganancia = st.slider("Objetivo de Ganancia (Take Profit %):", 1.0, 20.0, 5.0)
-    porcentaje_riesgo = st.slider("Límite de Pérdida (Stop Loss %):", 1.0, 10.0, 2.0)
-
-if st.button("CALCULAR NIVELES"):
-    if tipo_operacion == "LONG (Compra)":
-        tp = precio_entrada * (1 + (porcentaje_ganancia / 100))
-        sl = precio_entrada * (1 - (porcentaje_riesgo / 100))
-    else:
-        tp = precio_entrada * (1 - (porcentaje_ganancia / 100))
-        sl = precio_entrada * (1 + (porcentaje_riesgo / 100))
-        
-    st.success(f"🎯 **TAKE PROFIT (Meta):** {tp:,.2f} USD")
-    st.error(f"🛑 **STOP LOSS (Límite):** {sl:,.2f} USD")
-
-# ==========================================
-# 4. BARRA LATERAL - VIRALIZACIÓN
-# ==========================================
-st.sidebar.header("🌐 ¡Comparte Wilfer Trading Pro!")
-st.sidebar.write("Lleva esta herramienta a tus redes y grupos.")
-
-url_app = "https://wilfer-trading-pro-wswpgyfaccxrhg6uyvq4dv.streamlit.app/"
-texto_compartir = urllib.parse.quote("¡Mira los gráficos con precios en vivo y la calculadora de Wilfer Trading Pro! 🚀📈 Pruébala aquí:")
-
-whatsapp_url = f"https://api.whatsapp.com/send?text={texto_compartir}%20{url_app}"
-telegram_url = f"https://t.me/share/url?url={url_app}&text={texto_compartir}"
-twitter_url = f"https://twitter.com/intent/tweet?text={texto_compartir}&url={url_app}"
-
-st.sidebar.markdown(f"💬 [Compartir en WhatsApp]({whatsapp_url})")
-st.sidebar.markdown(f"✈️ [Compartir en Telegram]({telegram_url})")
-st.sidebar.markdown(f"🐦 [Compartir en Twitter/X]({twitter_url})")
-
+# --- VIRALIZACIÓN EN BARRA LATERAL ---
 st.sidebar.markdown("---")
-st.sidebar.text("Wilfer Trading Pro - Versión Oficial")
+st.sidebar.header("🌐 ¡Comparte Wilfer Trading!")
+url_app = "https://wilfer-trading-pro-wswpgyfaccxrhg6uyvq4dv.streamlit.app/"
+txt = urllib.parse.quote("¡Mira mi plataforma de Trading Pro!")
+st.sidebar.markdown(f"💬 [WhatsApp](https://api.whatsapp.com/send?text={txt}%20{url_app})")
+st.sidebar.markdown(f"✈️ [Telegram](https://t.me/share/url?url={url_app}&text={txt})")
+st.sidebar.markdown(f"🐦 [Twitter/X](https://twitter.com/intent/tweet?text={txt}&url={url_app})")
+
+# --- NAVEGACIÓN ---
+menu = st.sidebar.radio("Ir a:", t["menu"])
+
+# --- CENTRO DE OPERACIONES ---
+if menu == t["menu"][0]:
+    st.title("🎯 Centro de Operaciones")
+    col1, col2, col3 = st.columns(3)
+    pl_total = pd.to_numeric(df["P/L"], errors='coerce').fillna(0).sum()
+    col1.metric("Capital Actual", f"${10000 + pl_total:,.2f}")
+    col2.metric("P/L Neto", f"${pl_total:,.2f}")
+    col3.metric("Operaciones", len(df))
+    
+    with st.form("form"):
+        p, a = st.columns(2)
+        val_pl = p.number_input("Resultado P/L ($)", value=0.0)
+        val_act = a.selectbox("Activo", ["BTC", "EURUSD", "ETH", "NQ", "ES", "GOLD"])
+        val_notas = st.text_input("Notas de Psicología")
+        if st.form_submit_button("Registrar Operación"):
+            nueva = pd.DataFrame({"P/L": [val_pl], "Activo": [val_act], "Estado": ["Ganadora"], "Psicologia/Notas": [val_notas]})
+            df = pd.concat([df, nueva], ignore_index=True)
+            df.to_csv(FILE_PATH, index=False)
+            st.rerun()
+    st.dataframe(df, use_container_width=True)
+
+# --- CALCULADORA ---
+elif menu == t["menu"][1]:
+    st.title("🧮 Calculadora de Riesgo")
+    cap = st.number_input("Capital ($)", value=10000.0)
+    riesgo = st.number_input("Riesgo (%)", value=1.0)
+    st.info(f"Riesgo monetario por trade: ${cap * (riesgo/100):,.2f}")
+
+# --- ANÁLISIS ---
+elif menu == t["menu"][2]:
+    st.title("📊 Análisis de Rendimiento")
+    st.line_chart(pd.to_numeric(df["P/L"], errors='coerce').cumsum())
