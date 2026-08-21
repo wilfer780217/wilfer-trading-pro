@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+import urllib.parse
 
 # Configuración de la página (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Wilfer Trading Pro", layout="centered")
@@ -76,6 +77,23 @@ if not data_grafico.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("No se pudieron cargar los datos para el gráfico.")
+
+# SECCIÓN DE VIRALIZACIÓN EN LA BARRA LATERAL
+st.sidebar.markdown("---")
+st.sidebar.subheader("🌐 ¡Comparte Wilfer Trading Pro!")
+st.sidebar.write("Ayuda a que más traders conozcan la plataforma.")
+
+# Enlace de tu aplicación (reemplázalo con tu URL real de Streamlit cuando la tengas a mano)
+url_app = "https://share.streamlit.io/" 
+texto_compartir = urllib.parse.quote("¡Mira los análisis y gráficos profesionales de Wilfer Trading Pro! 🚀📈 Pruébala aquí:")
+
+whatsapp_url = f"https://api.whatsapp.com/send?text={texto_compartir}%20{url_app}"
+telegram_url = f"https://t.me/share/url?url={url_app}&text={texto_compartir}"
+twitter_url = f"https://twitter.com/intent/tweet?text={texto_compartir}&url={url_app}"
+
+st.sidebar.markdown(f"💬 [Compartir en WhatsApp]({whatsapp_url})")
+st.sidebar.markdown(f"✈️ [Compartir en Telegram]({telegram_url})")
+st.sidebar.markdown(f"🐦 [Compartir en X / Twitter]({twitter_url})")
 
 st.sidebar.markdown("---")
 st.sidebar.text("Wilfer Trading Pro v1.0")
