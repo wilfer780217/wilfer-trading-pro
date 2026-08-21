@@ -6,21 +6,29 @@ import urllib.parse
 
 st.set_page_config(page_title="Wilfer Trading Pro", layout="wide")
 
-# Título Principal
+# ==========================================
+# LOGOTIPO Y TÍTULO PRINCIPAL
+# ==========================================
+try:
+    st.image("logo.wilfer.jpg", width=350)
+except Exception:
+    pass
+
 st.title("🚀 WILFER TRADING PRO")
 st.subheader("Tu Asistente Profesional de Trading en Tiempo Real")
 
 # ==========================================
-# 1. GRÁFICO PROFESIONAL DE VELAS
+# 1. GRÁFICO PROFESIONAL DE VELAS (CON PRECIOS EN LOS EJES)
 # ==========================================
+st.markdown("---")
 st.header("📊 Gráfico de Velas Japonesas")
 activo_sel = st.selectbox("Selecciona activo para el gráfico:", ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "EURUSD=X"])
 
-with st.spinner("Cargando gráfico profesional..."):
+with st.spinner("Cargando gráfico profesional y escalas de precios..."):
     df = yf.download(activo_sel, period="1mo", interval="1d", progress=False)
     
     if not df.empty:
-        # Limpieza de formato para evitar columnas duplicadas
+        # Limpieza de formato MultiIndex de yfinance
         open_col = df['Open'].iloc[:, 0] if isinstance(df['Open'], pd.DataFrame) else df['Open']
         high_col = df['High'].iloc[:, 0] if isinstance(df['High'], pd.DataFrame) else df['High']
         low_col = df['Low'].iloc[:, 0] if isinstance(df['Low'], pd.DataFrame) else df['Low']
@@ -35,16 +43,19 @@ with st.spinner("Cargando gráfico profesional..."):
             name="Precio"
         )])
         
-        # Diseño limpio y profesional (sin panel de volumen abajo para que no se vea doble)
+        # Configuramos los ejes para que se muestren claramente los números de precio y fechas
         fig.update_layout(
             template="plotly_dark",
-            title=f"Evolución de {activo_sel}",
+            title=f"Evolución y Precios de {activo_sel}",
+            xaxis_title="Fecha",
+            yaxis_title="Precio (USD)",
             xaxis_rangeslider_visible=False,
-            height=500
+            height=550,
+            yaxis=dict(showticklabels=True, side="right") # Los números de precio al lado derecho como los pros
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning("No se pudieron cargar los datos del gráfico.")
+        st.warning("No se pudieron cargar los datos del gráfico en este momento.")
 
 # ==========================================
 # 2. ESCÁNER DE MERCADO
@@ -92,7 +103,7 @@ st.sidebar.header("🌐 ¡Comparte Wilfer Trading Pro!")
 st.sidebar.write("Lleva esta herramienta a tus redes y grupos.")
 
 url_app = "https://wilfer-trading-pro-wswpgyfaccxrhg6uyvq4dv.streamlit.app/"
-texto_compartir = urllib.parse.quote("¡Mira los gráficos en vivo y la calculadora de Wilfer Trading Pro! 🚀📈 Pruébala aquí:")
+texto_compartir = urllib.parse.quote("¡Mira los gráficos con precios en vivo y la calculadora de Wilfer Trading Pro! 🚀📈 Pruébala aquí:")
 
 whatsapp_url = f"https://api.whatsapp.com/send?text={texto_compartir}%20{url_app}"
 telegram_url = f"https://t.me/share/url?url={url_app}&text={texto_compartir}"
@@ -103,4 +114,4 @@ st.sidebar.markdown(f"✈️ [Compartir en Telegram]({telegram_url})")
 st.sidebar.markdown(f"🐦 [Compartir en Twitter/X]({twitter_url})")
 
 st.sidebar.markdown("---")
-st.sidebar.text("Wilfer Trading Pro - Versión Final")
+st.sidebar.text("Wilfer Trading Pro - Versión Oficial")
